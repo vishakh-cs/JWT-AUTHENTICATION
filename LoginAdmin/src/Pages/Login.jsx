@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoginSuccess,LoginFail } from "../Redux/AuthSlice";
+import { LoginSuccess,LoginFail, UploadPhotoSuccess } from "../Redux/AuthSlice";
 import { useDispatch } from "react-redux";
 
 
@@ -21,24 +21,37 @@ const Login = () => {
       const userLogged = await axios.post("http://localhost:5000/login", {
         email,
         password,
-      });
+      },{withCredentials:true});
       if (userLogged.data.success) {
+        const { userName, email, token, userId, profileImage ,isBlocked } = userLogged.data;
+
+        if (isBlocked) {
+          alert("Your account is blocked. Please contact support for assistance.");
+          dispatch(LoginFail());
+          return; // Do not proceed to home page if the user is blocked
+        }
+  
         dispatch(
           LoginSuccess({
-            userName: userLogged.data.userName,
-            email: userLogged.data.email,
+            userName,
+            email,
+            userId,
+            token,
+            profileImage,
           })
         );
+  
+        if (profileImage) {
+          dispatch(UploadPhotoSuccess({ profileImage }));
+        }
+  
         console.log('Login successful');
-
-        Navigate('/home')
-
+        Navigate('/home');
       } else {
-        alert('Invalid Credentials! Please check your Email or Password and Try Again')
-        dispatch(LoginFail())
+        alert('Invalid Credentials! Please check your Email or Password and Try Again');
+        dispatch(LoginFail());
         console.error('Login failed:', userLogged.data.message);
       }
-
     } catch (error) {
       console.error('Login failed:', error.message);
     }

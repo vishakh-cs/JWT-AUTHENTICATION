@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const SignUp = () => {
 
@@ -7,17 +8,39 @@ const SignUp = () => {
   const [username,setUserName] = useState('')
   const [password,setpassword] = useState('')
   const [ConfirmPAssword,setConfirmPassword] = useState('')
+  const [error, setError] = useState('');
   console.log(email,username,password,ConfirmPAssword);
+
+
+
+  const Navigate =useNavigate()
 
   const handleSignup= async(e)=>{
     e.preventDefault()
     if (password !== ConfirmPAssword) {
-      alert("Password and Confirm Password do not match");
+      setError("Password and Confirm Password do not match");
       return;
     }
-
+  
+    if (!email || !username || !password || !ConfirmPAssword) {
+      setError("All fields are required");
+      return;
+    }
+  
+    if (password.length < 6) {
+      setError("Password should be at least 6 characters long");
+      return;
+    }
     try {
      
+       // Check if the email already exists
+       const checkEmailResponse = await axios.post('http://localhost:5000/checkEmail', { email });
+
+       if (!checkEmailResponse.data.available) {
+         setError('Email already exists. Please choose a different one.');
+         return;
+       }
+
       const response = await axios.post('http://localhost:5000/signup', {
         email,
         username,
@@ -27,6 +50,7 @@ const SignUp = () => {
       if (response.data.success) {
        
         console.log('Signup successful');
+        Navigate('/')
       } else {
         
         console.error('Signup failed:', response.data.message);
@@ -44,6 +68,7 @@ const SignUp = () => {
       <div className="bg-white p-8 shadow-md rounded-md w-96">
         <h2 className="text-2xl font-bold mb-4">Sign Up</h2>
         <h4 className="text-xl mb-3 font-semibold">Create And Account</h4>
+        {error && <p className="text-red-500 mb-4">{error}</p>}
         <form>
           <div className="mb-4">
 

@@ -1,31 +1,59 @@
 // Home.jsx
 import { useDispatch } from 'react-redux';
 import { useSelector } from 'react-redux';
-import { Logout, UploadPhotoSuccess } from '../Redux/AuthSlice';
-import { useNavigate } from 'react-router-dom';
+import { LoginSuccess, Logout, UploadPhotoSuccess, logoutUser } from '../Redux/AuthSlice';
+import { useNavigate ,} from 'react-router-dom';
 import ProfilePhoto from '../Components/ProfilePhoto';
+import { useEffect } from 'react';
 
 const Home = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const userName = useSelector((state) => state.auth.userName);
   const email = useSelector((state) => state.auth.email);
-  const photoUrl = useSelector((state) => state.auth.photoUrl);
+  const photoUrl = useSelector((state) => state.auth.profileImage);
+  const token = useSelector((state)=>state.auth.token)
+  console.log("photo",photoUrl);
+  console.log("token",token);
+
+  const isAuthenticated = useSelector(state => state.auth.isAuthenticated);
+
+  useEffect(() => {
+    const storedAuthState = localStorage.getItem('authState');
+    if (storedAuthState) {
+      const parsedAuthState = JSON.parse(storedAuthState);
+      dispatch(LoginSuccess(parsedAuthState));
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    } else {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogout = () => {
-    dispatch(Logout());
+    dispatch(logoutUser());
     navigate('/');
   };
 
   const handleUploadSuccess = (newPhotoUrl) => {
-    dispatch(UploadPhotoSuccess(newPhotoUrl));
+    dispatch(UploadPhotoSuccess({profileImage:newPhotoUrl}));
   };
-  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-gray-700 to-purple-600">
-      <div className="bg-white p-8 shadow-md rounded-md w-96 text-center">
+    <div
+    className="min-h-screen flex items-center justify-center"
+    style={{
+      backgroundImage: 'url("https://i.pinimg.com/736x/58/bc/f0/58bcf033d8fc4ea996a61be7bd8163e1.jpg")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+    }}
+  >
+      <div className="bg-white p-8 shadow-md rounded-md w-full text-center">
         <ProfilePhoto 
-          photoUrl={photoUrl}
+          photoUrl={photoUrl ? `http://localhost:5000/uploads/${photoUrl}` : null}
           onUploadSuccess={handleUploadSuccess}
         />
 
